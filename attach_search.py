@@ -40,7 +40,8 @@ class AttachProbeSearch:
         kin.set_position(fake_pos, ['x', 'y', 'z'])
         toolhead.set_position(fake_pos)
 
-        # 4. Move to Dock
+        # 4. Move to Dock (keep current fake Z position - no Z movement)
+        # dock_y is used so if something goes wrong, it damages the corner not the bed center
         toolhead.move([self.dock_x, self.dock_y, self.search_dist, cur_pos[3]], 100.0)
         toolhead.wait_moves()
 
