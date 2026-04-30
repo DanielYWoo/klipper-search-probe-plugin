@@ -12,6 +12,9 @@ class AttachProbeSearch:
         self.search_speed = config.getfloat('search_speed', 5.0)
         self.slide_dist = config.getfloat('slide_dist', 50.0)
         self.attached_state = config.getint('attached_state', 0)
+        # Settle parameters: extra distance to lower after contact, and dwell time
+        self.settle_dist = config.getfloat('settle_dist', 0.5)
+        self.settle_dwell = config.getfloat('settle_dwell', 1.0)  # seconds
         self.gcode.register_command("ATTACH_PROBE_SEARCH", self.cmd_ATTACH_PROBE_SEARCH)
 
     def cmd_ATTACH_PROBE_SEARCH(self, gcmd):
@@ -54,6 +57,16 @@ class AttachProbeSearch:
             dist_moved += self.search_step
             if probe.mcu_probe.query_endstop(toolhead.get_last_move_time()) == self.attached_state:
                 attached = True
+                # Settle: lower extra distance to fully seat magnets
+                if self.settle_dist > 0:
+                    pos = toolhead.get_position()
+                    pos[2] -= self.settle_dist
+                    toolhead.move(pos, self.search_speed)
+                    toolhead.wait_moves()
+                # Dwell to let magnets settle
+                if self.settle_dwell > 0:
+                    reactor = self.printer.get_reactor()
+                    reactor.pause(reactor.monotonic() + self.settle_dwell)
                 break
 
         # 6. Finalize
