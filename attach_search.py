@@ -36,9 +36,11 @@ class AttachProbeSearch:
         # 3. Establish Fake Z Home (Z=search_dist)
         toolhead.wait_moves()
         cur_pos = toolhead.get_position()
+        gcmd.respond_info("DEBUG: Before fake Z - cur_pos: X=%.2f Y=%.2f Z=%.2f E=%.2f" % (cur_pos[0], cur_pos[1], cur_pos[2], cur_pos[3]))
         fake_pos = [cur_pos[0], cur_pos[1], self.search_dist, cur_pos[3]]
         kin.set_position(fake_pos, ['x', 'y', 'z'])
         toolhead.set_position(fake_pos)
+        gcmd.respond_info("DEBUG: After fake Z - fake_pos: X=%.2f Y=%.2f Z=%.2f E=%.2f" % (fake_pos[0], fake_pos[1], fake_pos[2], fake_pos[3]))
 
         # 4. Move to Dock (keep current fake Z position - no Z movement)
         # dock_y is used so if something goes wrong, it damages the corner not the bed center
@@ -75,10 +77,14 @@ class AttachProbeSearch:
         if attached:
             # Slide out
             final_pos = toolhead.get_position()
+            gcmd.respond_info("DEBUG: Before slide-out - final_pos: X=%.2f Y=%.2f Z=%.2f E=%.2f" % (final_pos[0], final_pos[1], final_pos[2], final_pos[3]))
             max_x = toolhead.get_status(self.printer.get_reactor().monotonic())['axis_maximum'][0]
             target_x = min(final_pos[0] + self.slide_dist, max_x)
+            gcmd.respond_info("DEBUG: Slide-out target: X=%.2f Y=%.2f Z=%.2f E=%.2f" % (target_x, final_pos[1], final_pos[2], final_pos[3]))
             toolhead.move([target_x, final_pos[1], final_pos[2], final_pos[3]], 10.0)
             toolhead.wait_moves()
+            after_slide_pos = toolhead.get_position()
+            gcmd.respond_info("DEBUG: After slide-out - pos: X=%.2f Y=%.2f Z=%.2f E=%.2f" % (after_slide_pos[0], after_slide_pos[1], after_slide_pos[2], after_slide_pos[3]))
             gcmd.respond_info("Probe attached. Logic Z is currently fake.")
         else:
             raise gcmd.error("Probe not detected.")
